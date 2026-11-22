@@ -638,6 +638,17 @@ function v4aEdits(lines: string[], strict: boolean, moves: [string, string][]): 
           i++;
           continue;
         }
+        if (blank(l)) {
+          // A whitespace-only line that opens with no marker (a tab-only line, say) is
+          // not a body line, but section 8 leaves blank lines at the end of a section
+          // out of it: when only blank lines follow, up to the next section or
+          // *** End Patch, the section is simply over. Anywhere else the line is a
+          // parse fault, exactly as before.
+          let j = i;
+          while (j < endIdx && blank(lines[j]!)) j++;
+          if (j >= endIdx || isSectionStart(lines[j]!)) break;
+          throw new Exit2(`error: parse ${i + 1}`);
+        }
         throw new Exit2(`error: parse ${i + 1}`);
       }
       if (chunks.length > 0) {
